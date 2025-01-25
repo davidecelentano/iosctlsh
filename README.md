@@ -50,6 +50,9 @@ To set up `iosctlsh` on your Linux system, follow these steps.
 
 Ensure you have the following installed:
 
+- **usbmuxd**:  
+  Check by running: `usbmuxd --version`
+
 - **Python 3.x**:  
   Check by running: `python --version`
 
@@ -58,7 +61,7 @@ Ensure you have the following installed:
 
 ### Installation
 
-1. Clone the repository: `git clone https://github.com/your-username/iosctlsh.git`
+1. Clone the repository: `git clone https://github.com/davidecelentano/iosctlsh.git`
 
 2. Navigate to the project directory: `cd iosctlsh`
 
