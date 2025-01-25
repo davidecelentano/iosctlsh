@@ -25,7 +25,7 @@ This project is an independent, open-source tool and is **not affiliated with, e
 
 ### Features
 
-- Perform **iOS software updates** and restores.
+- Perform **iOS software updates** and restores using signed firmwares downloaded from [ipsw.me](https://ipsw.me).
 - Create **full backups** or **delta (incremental) backups**.
 - Restore backups from other iOS devices or encrypted backups.
 - Enable **Developer Mode** for advanced debugging and development tools.
