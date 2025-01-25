@@ -30,7 +30,7 @@ This project is an independent, open-source tool and is **not affiliated with, e
 - Restore backups from other iOS devices or encrypted backups.
 - Enable **Developer Mode** for advanced debugging and development tools.
 - Exit or enter **Recovery Mode**.
-- Retrieve detailed device diagnostics, including model information, encryption backup status, and available capacity.
+- Retrieve detailed **device diagnostics**, including model information and encryption backup status.
 
 ---
 
