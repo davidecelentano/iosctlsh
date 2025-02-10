@@ -53,11 +53,17 @@ Ensure you have the following installed:
 - **usbmuxd**:  
   Check by running: `usbmuxd --version`
 
-- **Python 3.x**:  
+- **python3**:  
   Check by running: `python --version`
 
 - **jq**:  
   Check by running: `jq --version`
+
+- **python3-devel**:  
+  Package name varies by distro
+
+- **libusb**:  
+  package name varies by distro
 
 ### Installation
 
