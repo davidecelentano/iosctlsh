@@ -1,4 +1,4 @@
-# `iosctlsh` - Manage iOS devices on Linux via USB
+# `iOS Control` - Manage iOS devices on Linux via USB
 _A Linux-based command-line utility for managing iOS devices, including backups, restores, updates, and more._
 
 ### Disclaimer
