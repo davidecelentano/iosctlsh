@@ -108,7 +108,7 @@ init_python_venv() {
     # Update pymobiledevice3
     echo "   [+] Updating pymobiledevice3 ..."
     if ! python3 -m pip install -U pymobiledevice3 >/dev/null 2>&1; then
-        printf "    [-] WARNING: Failed to update pymobiledevice3. Please check your network connection.\n" >&2
+        printf "    [-] WARNING: Failed to update pymobiledevice3. Please check your network connection and ensure you have installed 'python3-devel' package.\n" >&2
     fi
 }
 
