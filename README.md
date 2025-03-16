@@ -48,22 +48,17 @@ To set up `iosctlsh` on your Linux system, follow these steps.
 
 ### Prerequisites
 
-Ensure you have the following installed:
+Ensure you have the following dependencies installed (package names may vary by distro):
 
-- **usbmuxd**:  
-  Check by running: `usbmuxd --version`
+- **usbmuxd**
+- **libusb**
+- **python3**
+- **python3-devel**
+- **jq**
 
-- **python3**:  
-  Check by running: `python --version`
+For Debian-based distros if python is not recognized, create a symbolic link to python3:
 
-- **jq**:  
-  Check by running: `jq --version`
-
-- **python3-devel**:  
-  Package name varies by distro
-
-- **libusb**:  
-  package name varies by distro
+`sudo ln -s /usr/bin/python3 /usr/bin/python`
 
 ### Installation
 
