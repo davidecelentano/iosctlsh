@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # iosctl.sh - A Linux-based command-line utility for managing iOS devices.
 #
@@ -101,7 +101,7 @@ init_python_venv() {
     # Activate the virtual environment
     source "$VENV_DIR/bin/activate"
     if [ -z "$VIRTUAL_ENV" ]; then
-        printf "    [-] ERROR: Failed to activate Python virtual environment.\n" >&2
+        printf "    [-] ERROR: Failed to activate Python virtual environment, delete \"%s\" and try again.\n" "$VENV_DIR" >&2
         exit 1
     fi
 
