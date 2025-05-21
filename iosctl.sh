@@ -34,8 +34,8 @@ display_header() {
 init_usbmuxd() {
     echo "[+] Initializing Usbmuxd service ..."
 
-    # Check if the usbmuxd service exists
-    if systemctl list-unit-files --type=service | grep -Fq "^usbmuxd"; then
+    # Check if the usbmuxd service or socket exists (quietly)
+    if systemctl list-unit-files | grep -q usbmuxd; then
         if ! systemctl restart usbmuxd; then
             printf "    [-] ERROR: Failed to restart usbmuxd service. Please check the service status.\n" >&2
             exit 1
@@ -45,6 +45,7 @@ init_usbmuxd() {
         exit 1
     fi
 }
+
 
 
 # Function: Initialize resources
