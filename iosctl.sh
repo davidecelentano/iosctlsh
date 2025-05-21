@@ -32,14 +32,20 @@ display_header() {
 
 # Function: Initialize Usbmuxd service
 init_usbmuxd() {
-    echo '[+] Starting Usbmuxd service ...'
-    if ! systemctl is-active --quiet usbmuxd; then
-        systemctl start usbmuxd || {
-            printf "[-] ERROR: Failed to start usbmuxd service. Please check the service status.\n" >&2
+    echo "[+] Initializing Usbmuxd service ..."
+
+    # Check if the usbmuxd service exists
+    if systemctl list-unit-files --type=service | grep -Fq "^usbmuxd"; then
+        if ! systemctl restart usbmuxd; then
+            printf "    [-] ERROR: Failed to restart usbmuxd service. Please check the service status.\n" >&2
             exit 1
-        }
+        fi
+    else
+        printf "    [-] ERROR: usbmuxd is not installed on the system.\n" >&2
+        exit 1
     fi
 }
+
 
 # Function: Initialize resources
 init_resources() {
