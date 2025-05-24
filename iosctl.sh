@@ -129,7 +129,7 @@ init_device_info() {
 
     DEVICE_NAME=$(pymobiledevice3 lockdown device-name 2>&1)
     if printf "%s" "$DEVICE_NAME" | grep -q "pymobiledevice3."; then
-        echo "[-] ERROR: Device not detected. Is the device in Recovery or DFU mode?"
+        echo "[-] WARNING: Device not detected or locked. Is the device in Recovery or DFU mode?"
         echo "1. Yes"
         echo "2. No"
         echo "3. Exit"
