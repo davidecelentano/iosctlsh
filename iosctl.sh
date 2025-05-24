@@ -124,7 +124,7 @@ init_python_venv() {
 init_device_info() {
     echo "[+] Retrieving device info ..."
     echo "    [!] IMPORTANT : Device must be unlocked"
-    echo "    [*] INFO : If retrieving device command hangs without any result, reboot your mobile device"
+    echo "    [*] INFO : If retrieving device command hangs without any result or fails, reboot or reconnect your mobile device"
     pymobiledevice3 lockdown pair >/dev/null 2>&1
 
     DEVICE_NAME=$(pymobiledevice3 lockdown device-name 2>&1)
