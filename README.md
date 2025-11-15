@@ -54,6 +54,7 @@ Ensure you have the following dependencies installed (package names may vary by 
 - **libusb**
 - **python3**
 - **python3-devel**
+- **python3-venv**
 - **jq**
 
 For Debian-based distros if python is not recognized, create a symbolic link to python3:
