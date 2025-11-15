@@ -112,10 +112,16 @@ init_python_venv() {
         exit 1
     fi
 
+    # Update pip
+    echo "   [+] Updating pip ..."
+    if ! python -m ensurepip --upgrade --default-pip >/dev/null 2>&1; then
+        printf "    [-] ERROR: Failed to update pip. Please check your network connection and ensure you have installed 'python3-devel' package.\n" >&2
+    fi
+
     # Update pymobiledevice3
     echo "   [+] Updating pymobiledevice3 ..."
-    if ! python3 -m pip install -U pymobiledevice3 >/dev/null 2>&1; then
-        printf "    [-] WARNING: Failed to update pymobiledevice3. Please check your network connection and ensure you have installed 'python3-devel' package.\n" >&2
+    if ! python -m pip install -U pymobiledevice3 >/dev/null 2>&1; then
+        printf "    [-] WARNING: Failed to update pymobiledevice3. Please check your network connection.\n" >&2
     fi
 }
 
@@ -808,4 +814,3 @@ init_resources
 init_python_venv
 init_device_info
 main_menu
-
