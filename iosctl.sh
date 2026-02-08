@@ -608,7 +608,7 @@ backup_now_menu() {
                     echo "[+] Starting Delta Sync ..."
 
                     # Run the delta backup command
-                    pymobiledevice3 backup2 backup "$BACKUP_DIR" --udid $UNIQUE_DEVICE_ID
+                    pymobiledevice3 backup2 backup "$BACKUP_DIR" --no-full --udid $UNIQUE_DEVICE_ID
 
                     # Notify user that the sync has finished
                     echo "[+] Delta sync process has finished."
