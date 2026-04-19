@@ -280,8 +280,11 @@ find_latest_backup() {
 # Function: Check encryption status
 check_encryption_status() {
     ENCRY_STAT_OUTPUT=$(pymobiledevice3 backup2 change-password EncryptionChecker999! EncryptionChecker999! 2>&1)
-    if printf "%s" "$ENCRY_STAT_OUTPUT" | grep -q "Encryption is not turned on!"; then
+
+    if printf '%s\n' "$ENCRY_STAT_OUTPUT" | grep -Fq 'ERROR Encryption is not turned on!'; then
         ENCRY_STAT="OFF"
+    elif printf '%s\n' "$ENCRY_STAT_OUTPUT" | grep -Fq 'Invalid password'; then
+        ENCRY_STAT="ON"
     else
         ENCRY_STAT="ON"
     fi
