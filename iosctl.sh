@@ -386,25 +386,38 @@ run_idevicerestore_restore() {
 run_pymobiledevice3_restore_with_fallback() {
     local restore_mode="$1"
     local firmware_path="$2"
-    local restore_log
     local restore_status
-    local last_output_line
+    local restore_pid
+    local restore_output_fd
+    local output_line
+    local normalized_line
+    local last_output_line=""
 
-    restore_log=$(mktemp "$CURRENT_DIR/resources/pymobiledevice3-restore.XXXXXX.log") || {
-        printf "[-] ERROR: Failed to create temporary restore log.\n" >&2
-        return 1
+    # Stream pymobiledevice3 output while retaining only the last non-empty line
+    # in memory. No restore log or temporary file is created.
+    coproc PMD3_RESTORE {
+        run_pymobiledevice3_restore "$restore_mode" "$firmware_path" 2>&1
     }
 
-    run_pymobiledevice3_restore "$restore_mode" "$firmware_path" 2>&1 | tee "$restore_log"
-    restore_status=${PIPESTATUS[0]}
+    restore_pid="$PMD3_RESTORE_PID"
+    restore_output_fd="${PMD3_RESTORE[0]}"
+
+    while IFS= read -r output_line || [[ -n "$output_line" ]]; do
+        printf "%s\n" "$output_line"
+
+        normalized_line="${output_line%$'\r'}"
+        if [[ -n "${normalized_line//[[:space:]]/}" ]]; then
+            last_output_line="$normalized_line"
+        fi
+    done <&"$restore_output_fd"
+
+    wait "$restore_pid"
+    restore_status=$?
+    exec {restore_output_fd}<&-
 
     if [[ $restore_status -eq 0 ]]; then
-        rm -f "$restore_log"
         return 0
     fi
-
-    last_output_line=$(awk 'NF { last = $0 } END { sub(/\r$/, "", last); print last }' "$restore_log")
-    rm -f "$restore_log"
 
     if [[ "$last_output_line" == "NotImplementedError" ]]; then
         echo "[!] pymobiledevice3 does not implement this restore format. Falling back to bundled idevicerestore ..."
