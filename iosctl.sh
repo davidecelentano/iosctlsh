@@ -393,8 +393,7 @@ run_pymobiledevice3_restore_with_fallback() {
     local normalized_line
     local last_output_line=""
 
-    # Stream pymobiledevice3 output while retaining only the last non-empty line
-    # in memory. No restore log or temporary file is created.
+    # Stream pymobiledevice3 output while retaining only the last non-empty line in memory.
     coproc PMD3_RESTORE {
         run_pymobiledevice3_restore "$restore_mode" "$firmware_path" 2>&1
     }
