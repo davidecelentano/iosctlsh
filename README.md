@@ -30,39 +30,39 @@ This project is an independent, open-source tool and is **not affiliated with, e
 
 ### Features
 
-* Perform **iOS software updates** and **restores** using signed firmwares downloaded from [ipsw.me](https://ipsw.me).
+* Perform **iOS software updates** and **factory restores** using signed firmware downloaded from [ipsw.me](https://ipsw.me).
+* Support firmware restores on both **Image4** and legacy **IMG3** devices.
 * Create **full backups** or **delta (incremental) backups**.
 * **Restore backups** from other iOS devices or encrypted backups.
 * Enable **Developer Mode** for advanced debugging and development tools.
-* Exit or enter **Recovery Mode**.
-* Retrieve detailed **device diagnostics**, including model information and encryption backup status.
+* Enter or exit **Recovery Mode**.
+* Retrieve detailed **device information**, including model information and backup encryption status.
 
 ### Device Compatibility
 
-Firmware updates and factory restores rely on the Image4 restore implementation provided by `pymobiledevice3`.
+Firmware updates and factory restores support both modern Image4 devices and older devices using the IMG3 firmware format.
 
-These operations are generally supported on:
+`iosctlsh` automatically selects the appropriate restore backend:
 
-* **iPhone 5s** and later.
-* **iPad Air** and later.
-* **iPad mini 2** and later.
-* **iPod touch 6th generation** and later.
+* **Image4 devices** use `pymobiledevice3`.
+* **IMG3 devices** use the bundled static `idevicerestore` binary.
+* If the device capability cannot be determined, `pymobiledevice3` is attempted first.
 
-Older 32-bit devices using the IMG3 firmware format are not supported for firmware update or factory restore and may return:
+The bundled `idevicerestore` binaries support:
 
-```text
-NotImplementedError: is_image4_supported is False
-```
+* **Linux x86_64 / AMD64**
+* **Linux AArch64 / ARM64**
 
-Backup and backup restore operations are separate from firmware restores and are not affected by this Image4 limitation.
+Backup and backup restore operations are separate from firmware restores and are not affected by the Image4 or IMG3 format.
 
 ---
 
 ### Built With
 
 * [Bash](https://www.gnu.org/software/bash/) - Shell scripting language.
-* [pymobiledevice3](https://github.com/doronz88/pymobiledevice3) - A Python library for managing iOS devices.
-* [jq](https://stedolan.github.io/jq/) - Command-line JSON processor.
+* [pymobiledevice3](https://github.com/doronz88/pymobiledevice3) - Python library for managing iOS devices.
+* [idevicerestore](https://github.com/libimobiledevice/idevicerestore) - Firmware update and restore utility.
+* [jq](https://jqlang.github.io/jq/) - Command-line JSON processor.
 
 ---
 
@@ -72,7 +72,7 @@ To set up `iosctlsh` on your Linux system, follow these steps.
 
 ### Prerequisites
 
-Ensure you have the following dependencies installed (package names may vary by distro):
+Ensure you have the following dependencies installed. Package names may vary by distribution:
 
 * **usbmuxd**
 * **libusb**
@@ -82,19 +82,47 @@ Ensure you have the following dependencies installed (package names may vary by 
 * **jq**
 * **ca-certificates**
 
-For Debian-based distros if python is not recognized, create a symbolic link to python3:
+`usbmuxd` must be installed and available as a system service.
 
-`sudo ln -s /usr/bin/python3 /usr/bin/python`
+For Debian-based distributions, if the `python` command is not available, install:
+
+```bash
+sudo apt install python-is-python3
+```
+
+Alternatively, create a symbolic link to Python 3:
+
+```bash
+sudo ln -s /usr/bin/python3 /usr/local/bin/python
+```
 
 ### Installation
 
-1. Clone the repository: `git clone https://github.com/davidecelentano/iosctlsh.git`
+1. Clone the repository:
 
-2. Navigate to the project directory: `cd iosctlsh`
+   ```bash
+   git clone https://github.com/davidecelentano/iosctlsh.git
+   ```
 
-3. Make the script executable: `chmod +x iosctl.sh`
+2. Navigate to the project directory:
 
-4. Run the script: `./iosctl.sh`
+   ```bash
+   cd iosctlsh
+   ```
+
+3. Make the script and bundled binaries executable:
+
+   ```bash
+   chmod +x iosctl.sh
+   chmod +x bin/linux-x86_64/idevicerestore
+   chmod +x bin/linux-aarch64/idevicerestore
+   ```
+
+4. Run the script:
+
+   ```bash
+   ./iosctl.sh
+   ```
 
 ### Overview
 

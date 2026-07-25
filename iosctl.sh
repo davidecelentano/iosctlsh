@@ -14,9 +14,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 
-CURRENT_DIR=$(pwd)
-VENV_DIR="./resources/python/pymobiledevice3"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
+CURRENT_DIR="$SCRIPT_DIR"
+VENV_DIR="$CURRENT_DIR/resources/python/pymobiledevice3"
 BACKUP_BASE_DIR="$CURRENT_DIR/resources/backups"
+IDEVICERESTORE_BIN=""
+IMAGE4_SUPPORTED="unknown"
 
 # Function: Display header
 display_header() {
@@ -47,6 +50,36 @@ init_usbmuxd() {
 }
 
 
+# Function: Initialize bundled idevicerestore
+init_idevicerestore() {
+    local system_arch
+    system_arch=$(uname -m)
+
+    case "$system_arch" in
+        x86_64|amd64)
+            IDEVICERESTORE_BIN="$CURRENT_DIR/bin/linux-x86_64/idevicerestore"
+            ;;
+        aarch64|arm64)
+            IDEVICERESTORE_BIN="$CURRENT_DIR/bin/linux-aarch64/idevicerestore"
+            ;;
+        *)
+            printf "    [-] ERROR: Unsupported system architecture: %s. Only x86_64 and aarch64 are supported.\n" "$system_arch" >&2
+            exit 1
+            ;;
+    esac
+
+    if [[ ! -f "$IDEVICERESTORE_BIN" ]]; then
+        printf "    [-] ERROR: Bundled idevicerestore binary not found: %s\n" "$IDEVICERESTORE_BIN" >&2
+        exit 1
+    fi
+
+    if [[ ! -x "$IDEVICERESTORE_BIN" ]]; then
+        printf "    [-] ERROR: Bundled idevicerestore binary is not executable: %s\n" "$IDEVICERESTORE_BIN" >&2
+        printf "    [*] INFO: Run: chmod +x \"%s\"\n" "$IDEVICERESTORE_BIN" >&2
+        exit 1
+    fi
+}
+
 
 # Function: Initialize resources
 init_resources() {
@@ -63,7 +96,7 @@ init_resources() {
     fi    
 
     # Define the required directory structure
-    local resources_dir="./resources"
+    local resources_dir="$CURRENT_DIR/resources"
     local backups_dir="$resources_dir/backups"
     local python_dir="$resources_dir/python"
 
@@ -91,6 +124,8 @@ init_resources() {
         }
     fi
 
+    # Select the bundled idevicerestore binary for the current architecture
+    init_idevicerestore
 }
 
 # Function: Activate Python virtual environment
@@ -128,6 +163,8 @@ init_python_venv() {
 
 # Function: Initialize device info
 init_device_info() {
+    IMAGE4_SUPPORTED="unknown"
+
     echo "[+] Retrieving device info ..."
     echo "    [!] IMPORTANT : Device must be unlocked"
     echo "    [*] INFO : If retrieving device command hangs without any result or fails, reboot or reconnect your mobile device"
@@ -226,6 +263,15 @@ init_device_info() {
     PHONE_NUMBER=$(printf "%s" "$DEVICE_INFO" | jq -r '.PhoneNumber // "N/A"')
     SERIAL_NUMBER=$(printf "%s" "$DEVICE_INFO" | jq -r '.SerialNumber // "N/A"')
     UNIQUE_DEVICE_ID=$(printf "%s" "$DEVICE_INFO" | jq -r '.UniqueDeviceID // "N/A"')
+    IMAGE4_SUPPORTED=$(printf "%s" "$DEVICE_INFO" | jq -r '
+        if .Image4Supported == true then
+            "true"
+        elif .Image4Supported == false then
+            "false"
+        else
+            "unknown"
+        end
+    ')
 
     # Parse ModelNumber and RegionInfo to form MODEL_NUMBER
     MODEL_NUMBER=$(printf "%s" "$DEVICE_INFO" | jq -r '.ModelNumber // empty')
@@ -310,6 +356,89 @@ display_device_info() {
     printf "\n"
 }
 
+# Function: Run pymobiledevice3 firmware restore
+run_pymobiledevice3_restore() {
+    local restore_mode="$1"
+    local firmware_path="$2"
+    local restore_args=(restore update --ipsw "$firmware_path")
+
+    if [[ "$restore_mode" == "erase" ]]; then
+        restore_args+=(--erase)
+    fi
+
+    sudo "$VENV_DIR/bin/pymobiledevice3" "${restore_args[@]}"
+}
+
+# Function: Run bundled idevicerestore firmware restore
+run_idevicerestore_restore() {
+    local restore_mode="$1"
+    local firmware_path="$2"
+    local restore_args=()
+
+    if [[ "$restore_mode" == "erase" ]]; then
+        restore_args+=(--erase)
+    fi
+
+    sudo "$IDEVICERESTORE_BIN" "${restore_args[@]}" "$firmware_path"
+}
+
+# Function: Run pymobiledevice3 and fall back on an exact NotImplementedError
+run_pymobiledevice3_restore_with_fallback() {
+    local restore_mode="$1"
+    local firmware_path="$2"
+    local restore_log
+    local restore_status
+    local last_output_line
+
+    restore_log=$(mktemp "$CURRENT_DIR/resources/pymobiledevice3-restore.XXXXXX.log") || {
+        printf "[-] ERROR: Failed to create temporary restore log.\n" >&2
+        return 1
+    }
+
+    run_pymobiledevice3_restore "$restore_mode" "$firmware_path" 2>&1 | tee "$restore_log"
+    restore_status=${PIPESTATUS[0]}
+
+    if [[ $restore_status -eq 0 ]]; then
+        rm -f "$restore_log"
+        return 0
+    fi
+
+    last_output_line=$(awk 'NF { last = $0 } END { sub(/\r$/, "", last); print last }' "$restore_log")
+    rm -f "$restore_log"
+
+    if [[ "$last_output_line" == "NotImplementedError" ]]; then
+        echo "[!] pymobiledevice3 does not implement this restore format. Falling back to bundled idevicerestore ..."
+        run_idevicerestore_restore "$restore_mode" "$firmware_path"
+        return $?
+    fi
+
+    return "$restore_status"
+}
+
+# Function: Select firmware restore backend
+run_firmware_restore() {
+    local restore_mode="$1"
+    local firmware_path="$2"
+
+    # The restore process runs with elevated USB access and no active user venv
+    deactivate 2>/dev/null || true
+
+    case "$IMAGE4_SUPPORTED" in
+        false)
+            echo "[+] Image4Supported: false. Using bundled idevicerestore for IMG3 restore ..."
+            run_idevicerestore_restore "$restore_mode" "$firmware_path"
+            ;;
+        true)
+            echo "[+] Image4Supported: true. Using pymobiledevice3 ..."
+            run_pymobiledevice3_restore "$restore_mode" "$firmware_path"
+            ;;
+        *)
+            echo "[+] Image4Supported: unknown. Trying pymobiledevice3 first ..."
+            run_pymobiledevice3_restore_with_fallback "$restore_mode" "$firmware_path"
+            ;;
+    esac
+}
+
 # Function: Software Update menu
 software_update_menu() {
     while true; do
@@ -337,14 +466,8 @@ software_update_menu() {
                     continue
                 fi
 
-                # Exit from the virtual environment
-                deactivate 2>/dev/null || true
-
-                # Run the command as sudo with the virtual environment reloaded
-                sudo bash -c "
-                    source \"$VENV_DIR/bin/activate\" &&
-                    pymobiledevice3 restore update --ipsw \"$fw_update_path\"
-                "
+                # Run the firmware update with the appropriate restore backend
+                run_firmware_restore "update" "$fw_update_path"
 
                 # Notify user that the update process has completed
                 echo "[+] Software update process has finished. Please check the above output for any errors."
@@ -412,14 +535,8 @@ restore_device_menu() {
                     continue
                 fi
 
-                # Deactivate virtual environment
-                deactivate 2>/dev/null || true
-
-                # Run the restore command as sudo
-                sudo bash -c "
-                    source \"$VENV_DIR/bin/activate\" &&
-                    pymobiledevice3 restore update --ipsw \"$firmware_path\" --erase
-                "
+                # Run the erase restore with the appropriate restore backend
+                run_firmware_restore "erase" "$firmware_path"
 
                 # Notify user of completion and exit the script
                 echo "[+] Restore process has finished. Please check the above output for any errors."
