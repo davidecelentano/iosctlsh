@@ -80,6 +80,7 @@ Ensure you have the following dependencies installed (package names may vary by 
 * **python3-devel**
 * **python3-venv**
 * **jq**
+* **ca-certificates**
 
 For Debian-based distros if python is not recognized, create a symbolic link to python3:
 
